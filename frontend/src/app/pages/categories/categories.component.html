@@ -1,0 +1,151 @@
+<div class="container-fluid p-0">
+  <div
+    class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary"
+  >
+    <div>
+      <h2 class="h4 fw-bold text-white mb-1">Category Management</h2>
+      <p class="text-muted small mb-0">Organize product categories and subcategories</p>
+    </div>
+    <button
+      class="btn btn-primary btn-sm d-flex align-items-center gap-1"
+      (click)="openCreateModal()"
+    >
+      <span>➕ Add Category</span>
+    </button>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card bg-dark border-secondary p-3">
+        <div class="border-bottom border-secondary pb-2 mb-3">
+          <h5 class="h6 fw-bold text-white mb-0">
+            📁 Root Categories ({{ mainCategories().length }})
+          </h5>
+        </div>
+        <div class="d-flex flex-column gap-2">
+          @for (cat of mainCategories(); track cat.id) {
+            <div
+              class="card bg-body-tertiary border-secondary p-2 d-flex flex-row justify-content-between align-items-center cursor-pointer"
+              [class.border-primary]="selectedParentId() === cat.id"
+              (click)="selectMainCategory(cat.id)"
+              style="cursor: pointer"
+            >
+              <div class="d-flex flex-column">
+                <span class="fw-bold text-white small">{{ cat.name }}</span>
+                <span class="text-muted small">{{ cat.description || 'No description' }}</span>
+              </div>
+              <div class="btn-group btn-group-sm" (click)="$event.stopPropagation()">
+                <button class="btn btn-outline-light btn-sm" (click)="openEditModal(cat)">
+                  ✏️
+                </button>
+                <button class="btn btn-outline-danger btn-sm" (click)="deleteCategory(cat.id)">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <div class="text-center text-muted py-3 small">No root categories found.</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card bg-dark border-secondary p-3">
+        <div class="border-bottom border-secondary pb-2 mb-3">
+          <h5 class="h6 fw-bold text-white mb-0">
+            📂 Subcategories
+            {{ selectedParentCategory() ? 'for "' + selectedParentCategory()?.name + '"' : '' }}
+          </h5>
+        </div>
+        <div class="d-flex flex-column gap-2">
+          @for (sub of subCategories(); track sub.id) {
+            <div
+              class="card bg-body-tertiary border-secondary p-2 d-flex flex-row justify-content-between align-items-center"
+            >
+              <div class="d-flex flex-column">
+                <span class="fw-bold text-white small">{{ sub.name }}</span>
+                <span class="text-muted small">{{ sub.description || 'No description' }}</span>
+              </div>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-light btn-sm" (click)="openEditModal(sub)">
+                  ✏️
+                </button>
+                <button class="btn btn-outline-danger btn-sm" (click)="deleteCategory(sub.id)">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <div class="text-center text-muted py-3 small">
+              {{
+                selectedParentId()
+                  ? 'No subcategories for this root category.'
+                  : 'Select a root category to view subcategories.'
+              }}
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (showModal()) {
+    <div class="modal d-block tab-modal-backdrop" tabIndex="-1" (click)="closeModal()">
+      <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title h6 fw-bold">
+              {{ editingCategory() ? 'Edit Category #' + editingCategory()?.id : 'Add Category' }}
+            </h5>
+            <button type="button" class="btn-close btn-close-white" (click)="closeModal()"></button>
+          </div>
+          <form (ngSubmit)="saveCategory()">
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Category Name *</label>
+                <input
+                  type="text"
+                  class="form-control bg-dark text-white border-secondary"
+                  [(ngModel)]="formData.name"
+                  name="name"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Parent Category (Optional)</label>
+                <select
+                  class="form-select bg-dark text-white border-secondary"
+                  [(ngModel)]="formData.parentCategoryId"
+                  name="parentCategoryId"
+                >
+                  <option [value]="null">Root Category (No Parent)</option>
+                  @for (cat of mainCategories(); track cat.id) {
+                    <option [value]="cat.id">{{ cat.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Description</label>
+                <textarea
+                  class="form-control bg-dark text-white border-secondary"
+                  rows="3"
+                  [(ngModel)]="formData.description"
+                  name="description"
+                ></textarea>
+              </div>
+            </div>
+            <div class="modal-footer border-secondary">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="closeModal()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary btn-sm">Save Category</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+</div>

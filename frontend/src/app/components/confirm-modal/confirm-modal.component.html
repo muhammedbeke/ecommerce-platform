@@ -1,0 +1,27 @@
+@if (confirmService.isOpen()) {
+  <div class="modal d-block tab-modal-backdrop" tabIndex="-1" (click)="onCancel()">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;" (click)="$event.stopPropagation()">
+      <div class="modal-content bg-dark text-white border-secondary shadow-lg">
+        <div class="modal-header border-secondary py-3">
+          <h5 class="modal-title h6 fw-bold d-flex align-items-center gap-2 mb-0">
+            <span class="fs-5">⚠️</span> {{ confirmService.title() }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="onCancel()" aria-label="Close"></button>
+        </div>
+        <div class="modal-body py-4">
+          <p class="mb-0 text-subtle fs-6 lead" style="font-size: 0.95rem;">
+            {{ confirmService.message() }}
+          </p>
+        </div>
+        <div class="modal-footer border-secondary py-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm px-3" (click)="onCancel()">
+            {{ confirmService.cancelText() }}
+          </button>
+          <button type="button" class="btn btn-sm px-3" [ngClass]="confirmService.btnClass()" (click)="onConfirm()">
+            {{ confirmService.confirmText() }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

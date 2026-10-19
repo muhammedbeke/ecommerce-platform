@@ -1,0 +1,161 @@
+<div class="container-fluid p-0">
+  <div
+    class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary"
+  >
+    <div>
+      <h2 class="h4 fw-bold text-white mb-1">Inventory Purchases</h2>
+      <p class="text-muted small mb-0">
+        Record inventory purchases to automatically update stock levels and product prices
+      </p>
+    </div>
+    <button
+      class="btn btn-primary btn-sm d-flex align-items-center gap-1"
+      (click)="openCreateModal()"
+    >
+      <span>➕ Record Purchase</span>
+    </button>
+  </div>
+
+  <div class="card bg-dark border-secondary">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle mb-0">
+        <thead>
+          <tr class="text-uppercase small text-muted">
+            <th>Purchase ID</th>
+            <th>Purchase Date</th>
+            <th>Purchased Items</th>
+            <th>Total Cost</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (buying of buyings(); track buying.id) {
+            <tr>
+              <td>
+                <strong>#BUY-{{ buying.id }}</strong>
+              </td>
+              <td>{{ buying.purchaseDate | date: 'medium' }}</td>
+              <td>
+                <div class="d-flex flex-wrap gap-1">
+                  @for (detail of buying.buyingDetails; track detail.id) {
+                    <span class="badge bg-secondary font-monospace fw-normal">
+                      {{ detail.productName || 'Product #' + detail.productId }}:
+                      {{ detail.quantity }} units @ ${{ detail.price.toFixed(2) }}
+                    </span>
+                  }
+                </div>
+              </td>
+              <td>
+                <strong>${{ calculateBuyingTotal(buying).toFixed(2) }}</strong>
+              </td>
+              <td class="text-end">
+                <button class="btn btn-outline-danger btn-sm" (click)="deleteBuying(buying.id)">
+                  🗑️ Delete
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">
+                No inventory purchases recorded yet.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  @if (showModal()) {
+    <div class="modal d-block tab-modal-backdrop" tabIndex="-1" (click)="closeModal()">
+      <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title h6 fw-bold">Record Inventory Purchase</h5>
+            <button type="button" class="btn-close btn-close-white" (click)="closeModal()"></button>
+          </div>
+          <form (ngSubmit)="saveBuying()">
+            <div class="modal-body">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h6 class="fw-bold mb-0">Purchase Items</h6>
+                <button type="button" class="btn btn-outline-light btn-sm" (click)="addItemRow()">
+                  ➕ Add Item
+                </button>
+              </div>
+
+              @for (item of buyingItems; track $index) {
+                <div class="card bg-body-tertiary border-secondary p-3 mb-2">
+                  <div class="row g-2 align-items-end">
+                    <div class="col-md-5">
+                      <label class="form-label small fw-bold">Product</label>
+                      <select
+                        class="form-select form-select-sm bg-dark text-white border-secondary"
+                        [(ngModel)]="item.productId"
+                        [name]="'prod_' + $index"
+                        required
+                      >
+                        <option [value]="undefined">Select Product</option>
+                        @for (p of products(); track p.id) {
+                          <option [value]="p.id">
+                            {{ p.name }} (Current Stock: {{ p.stock }})
+                          </option>
+                        }
+                      </select>
+                    </div>
+
+                    <div class="col-md-3">
+                      <label class="form-label small fw-bold">Quantity</label>
+                      <input
+                        type="number"
+                        min="1"
+                        class="form-control form-control-sm bg-dark text-white border-secondary"
+                        [(ngModel)]="item.quantity"
+                        [name]="'qty_' + $index"
+                        required
+                      />
+                    </div>
+
+                    <div class="col-md-3">
+                      <label class="form-label small fw-bold">Unit Cost ($)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        class="form-control form-control-sm bg-dark text-white border-secondary"
+                        [(ngModel)]="item.price"
+                        [name]="'price_' + $index"
+                        required
+                      />
+                    </div>
+
+                    <div class="col-md-1 text-end">
+                      <button
+                        type="button"
+                        class="btn btn-outline-danger btn-sm"
+                        (click)="removeItemRow($index)"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+            <div class="modal-footer border-secondary">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="closeModal()">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary btn-sm"
+                [disabled]="buyingItems.length === 0"
+              >
+                Save Purchase
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+</div>

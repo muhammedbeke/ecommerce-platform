@@ -1,0 +1,211 @@
+<div class="container-fluid p-0">
+  <div
+    class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary"
+  >
+    <div>
+      <h2 class="h4 fw-bold text-white mb-1">Customers Directory</h2>
+      <p class="text-muted small mb-0">Manage customer accounts and shipping addresses</p>
+    </div>
+    <button
+      class="btn btn-primary btn-sm d-flex align-items-center gap-1"
+      (click)="openCreateModal()"
+    >
+      <span>➕ Add Customer</span>
+    </button>
+  </div>
+
+  <div class="card bg-dark border-secondary">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle mb-0">
+        <thead>
+          <tr class="text-uppercase small text-muted">
+            <th>ID</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Role</th>
+            <th>Addresses</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cust of customers(); track cust.id) {
+            <tr>
+              <td>
+                <strong>#{{ cust.id }}</strong>
+              </td>
+              <td>
+                <strong>{{ cust.email }}</strong>
+              </td>
+              <td>{{ cust.phone || '—' }}</td>
+              <td>
+                <span [class]="cust.role === 'ADMIN' ? 'badge bg-primary' : 'badge bg-secondary'">
+                  {{ cust.role || 'CUSTOMER' }}
+                </span>
+              </td>
+              <td>{{ cust.addresses ? cust.addresses.length : 0 }} Address(es)</td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-info btn-sm" (click)="openAddressesDrawer(cust)">
+                    📍 Addresses
+                  </button>
+                  <button class="btn btn-outline-light btn-sm" (click)="openEditModal(cust)">
+                    ✏️ Edit
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm" (click)="deleteCustomer(cust.id)">
+                    🗑️ Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">
+                No customers registered in system.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  @if (showModal()) {
+    <div class="modal d-block tab-modal-backdrop" tabIndex="-1" (click)="closeModal()">
+      <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title h6 fw-bold">
+              {{
+                editingCustomer() ? 'Edit Customer #' + editingCustomer()?.id : 'Add New Customer'
+              }}
+            </h5>
+            <button type="button" class="btn-close btn-close-white" (click)="closeModal()"></button>
+          </div>
+          <form (ngSubmit)="saveCustomer()">
+            <div class="modal-body">
+              @if (validationError()) {
+                <div class="alert alert-danger small py-2 mb-3">⚠️ {{ validationError() }}</div>
+              }
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Email Address *</label>
+                <input
+                  type="email"
+                  class="form-control bg-dark text-white border-secondary"
+                  [(ngModel)]="formData.email"
+                  name="email"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Phone Number *</label>
+                <input
+                  type="text"
+                  class="form-control bg-dark text-white border-secondary"
+                  [(ngModel)]="formData.phone"
+                  name="phone"
+                  placeholder="05551234567"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold">
+                  {{ editingCustomer() ? 'New Password (Optional)' : 'Password *' }}
+                </label>
+                <input
+                  type="password"
+                  class="form-control bg-dark text-white border-secondary"
+                  [(ngModel)]="formData.password"
+                  name="password"
+                  placeholder="Min 6 chars (Upper, lower, digit)"
+                />
+                <div class="form-text text-muted small mt-1">
+                  Must contain at least 1 uppercase, 1 lowercase letter, and 1 number (6-20 chars).
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer border-secondary">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="closeModal()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary btn-sm">Save Customer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (selectedCustomerForAddresses()) {
+    <div class="modal d-block tab-modal-backdrop" tabIndex="-1" (click)="closeAddressesDrawer()">
+      <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title h6 fw-bold">
+              Addresses for {{ selectedCustomerForAddresses()?.email }}
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              (click)="closeAddressesDrawer()"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="card bg-body-tertiary border-secondary p-3 mb-3">
+              <h6 class="fw-bold mb-2">Add Address</h6>
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Title *</label>
+                <input
+                  type="text"
+                  class="form-control form-control-sm bg-dark text-white border-secondary"
+                  [(ngModel)]="newAddress.title"
+                  placeholder="Home, Office, etc."
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Address Line *</label>
+                <input
+                  type="text"
+                  class="form-control form-control-sm bg-dark text-white border-secondary"
+                  [(ngModel)]="newAddress.addressLine"
+                  placeholder="Full street address..."
+                />
+              </div>
+              <button type="button" class="btn btn-primary btn-sm" (click)="addAddressToCustomer()">
+                ➕ Add Address
+              </button>
+            </div>
+
+            <h6 class="fw-bold mb-2">Existing Addresses</h6>
+            <div class="d-flex flex-column gap-2">
+              @for (addr of customerAddresses(); track addr.id) {
+                <div
+                  class="card bg-dark border-secondary p-2 d-flex flex-row justify-content-between align-items-center"
+                >
+                  <div>
+                    <div class="fw-bold text-white small">{{ addr.title }}</div>
+                    <div class="text-muted small">{{ addr.addressLine }}</div>
+                  </div>
+                  <button class="btn btn-outline-danger btn-sm" (click)="deleteAddress(addr.id)">
+                    Delete
+                  </button>
+                </div>
+              } @empty {
+                <div class="text-center text-muted py-3 small">
+                  No addresses recorded for this customer.
+                </div>
+              }
+            </div>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="closeAddressesDrawer()">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

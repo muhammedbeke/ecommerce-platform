@@ -1,0 +1,25 @@
+<div class="toast-container position-fixed top-0 end-0 p-3"
+  style="z-index: 9999; max-width: 380px; width: calc(100vw - 40px);" aria-live="polite" aria-atomic="true">
+  @for (toast of toastService.toasts(); track toast.id) {
+  <div class="toast show text-white mb-2 shadow border-0" [ngClass]="'toast-' + toast.type">
+    <div class="d-flex align-items-start p-3">
+      <div class="me-2 fs-5 lh-1">
+        @switch (toast.type) {
+        @case ('success') { ✅ }
+        @case ('error') { ❌ }
+        @case ('warning') { ⚠️ }
+        @case ('info') { ℹ️ }
+        }
+      </div>
+      <div class="flex-grow-1">
+        @if (toast.title) {
+        <strong class="d-block text-white mb-1 small">{{ toast.title }}</strong>
+        }
+        <div class="small text-light text-break">{{ toast.message }}</div>
+      </div>
+      <button type="button" class="btn-close btn-close-white ms-2" (click)="removeToast(toast.id)"
+        aria-label="Dismiss toast"></button>
+    </div>
+  </div>
+  }
+</div>

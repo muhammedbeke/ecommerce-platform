@@ -1,0 +1,36 @@
+<div class="d-flex align-items-center justify-content-center min-vh-100 bg-dark p-3">
+  <div class="card bg-dark text-white border-secondary p-4 w-100" style="max-width: 400px;">
+    <div class="text-center mb-4">
+      <h2 class="h4 fw-bold mb-1">Admin Login</h2>
+      <p class="text-muted small mb-0">Enter your credentials to access the dashboard</p>
+    </div>
+
+    @if (errorMessage()) {
+    <div class="alert alert-danger small py-2 mb-3 d-flex align-items-center gap-2">
+      <span>⚠️</span> {{ errorMessage() }}
+    </div>
+    }
+
+    <form (ngSubmit)="onLogin()" #loginForm="ngForm">
+      <div class="mb-3">
+        <label class="form-label small fw-bold" for="email">Email</label>
+        <input id="email" type="email" class="form-control bg-dark text-white border-secondary" [(ngModel)]="email"
+          name="email" required placeholder="Email address..." />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small fw-bold" for="password">Password</label>
+        <input id="password" type="password" class="form-control bg-dark text-white border-secondary"
+          [(ngModel)]="password" name="password" required placeholder="Password..." />
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100 mt-2 py-2" [disabled]="loading()">
+        @if (loading()) {
+        <span>Authenticating...</span>
+        } @else {
+        <span>Sign In</span>
+        }
+      </button>
+    </form>
+  </div>
+</div>

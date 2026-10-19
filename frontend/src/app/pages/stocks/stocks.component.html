@@ -1,0 +1,138 @@
+<div class="container-fluid p-0">
+  <div
+    class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary"
+  >
+    <div>
+      <h2 class="h4 fw-bold text-white mb-1">Stock Control</h2>
+      <p class="text-muted small mb-0">
+        Adjust inventory counts or set absolute product stock levels
+      </p>
+    </div>
+  </div>
+
+  <div class="card bg-dark border-secondary">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle mb-0">
+        <thead>
+          <tr class="text-uppercase small text-muted">
+            <th>Product ID</th>
+            <th>Product Name</th>
+            <th>Brand</th>
+            <th>Category</th>
+            <th>Current Stock</th>
+            <th>Status</th>
+            <th>Quick Adjust</th>
+            <th class="text-end">Set Stock</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of products(); track product.id) {
+            <tr>
+              <td>
+                <strong>#{{ product.id }}</strong>
+              </td>
+              <td>
+                <strong>{{ product.name }}</strong>
+              </td>
+              <td>{{ product.brand || '—' }}</td>
+              <td>
+                <span class="badge bg-secondary">{{
+                  product.category?.name || 'Uncategorized'
+                }}</span>
+              </td>
+              <td>
+                <strong>{{ product.stock }} units</strong>
+              </td>
+              <td>
+                @if (product.stock === 0) {
+                  <span class="badge bg-danger">Out of Stock</span>
+                } @else if (product.stock < (product.lowStockThreshold ?? 10)) {
+                  <span class="badge bg-warning text-dark">Low Stock</span>
+                } @else {
+                  <span class="badge bg-success">Healthy</span>
+                }
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    (click)="adjustStock(product.id, -10)"
+                  >
+                    -10
+                  </button>
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    (click)="adjustStock(product.id, -1)"
+                  >
+                    -1
+                  </button>
+                  <button
+                    class="btn btn-outline-success btn-sm"
+                    (click)="adjustStock(product.id, 1)"
+                  >
+                    +1
+                  </button>
+                  <button
+                    class="btn btn-outline-success btn-sm"
+                    (click)="adjustStock(product.id, 10)"
+                  >
+                    +10
+                  </button>
+                </div>
+              </td>
+              <td class="text-end">
+                <button class="btn btn-outline-primary btn-sm" (click)="openSetModal(product)">
+                  ✏️ Set Quantity
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="text-center text-muted py-4">
+                No products found for stock management.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  @if (showSetModal()) {
+    <div class="modal d-block tab-modal-backdrop" tabIndex="-1" (click)="closeSetModal()">
+      <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title h6 fw-bold">Set Stock Level - {{ selectedProduct()?.name }}</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              (click)="closeSetModal()"
+            ></button>
+          </div>
+          <form (ngSubmit)="saveSetStock()">
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Absolute Quantity *</label>
+                <input
+                  type="number"
+                  min="0"
+                  class="form-control bg-dark text-white border-secondary"
+                  [(ngModel)]="newAbsoluteQuantity"
+                  name="newQty"
+                  required
+                />
+              </div>
+            </div>
+            <div class="modal-footer border-secondary">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="closeSetModal()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary btn-sm">Update Stock</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+</div>

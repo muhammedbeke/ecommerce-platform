@@ -1,0 +1,299 @@
+<div class="container-fluid p-0">
+  <div
+    class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary"
+  >
+    <div>
+      <h2 class="h4 fw-bold text-white mb-1">Products Management</h2>
+      <p class="text-muted small mb-0">
+        Manage catalog items, pricing, category associations, and images
+      </p>
+    </div>
+    <button
+      class="btn btn-primary btn-sm d-flex align-items-center gap-1"
+      (click)="openCreateModal()"
+    >
+      <span>➕ Add Product</span>
+    </button>
+  </div>
+
+  <div class="card bg-dark border-secondary p-3 mb-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-8">
+        <input
+          type="text"
+          class="form-control bg-dark text-white border-secondary"
+          placeholder="Search products by name or brand..."
+          [(ngModel)]="searchQuery"
+        />
+      </div>
+      <div class="col-md-4">
+        <select
+          class="form-select bg-dark text-white border-secondary"
+          [(ngModel)]="selectedCategoryFilter"
+        >
+          <option [ngValue]="null">All Categories</option>
+          @for (cat of selectableCategories(); track cat.id) {
+            <option [ngValue]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card bg-dark border-secondary">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle mb-0">
+        <thead>
+          <tr class="text-uppercase small text-muted">
+            <th>ID</th>
+            <th>Thumbnail</th>
+            <th>Product Name</th>
+            <th>Brand</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of filteredProducts(); track product.id) {
+            <tr>
+              <td>
+                <strong>#{{ product.id }}</strong>
+              </td>
+              <td>
+                @if (product.images && product.images.length > 0) {
+                  <img
+                    [src]="getImageUrl(product.images[0].id)"
+                    class="rounded border border-secondary"
+                    style="width: 40px; height: 40px; object-fit: cover"
+                    alt="Product Thumbnail"
+                  />
+                } @else {
+                  <div
+                    class="bg-body-secondary text-muted rounded d-flex align-items-center justify-content-center"
+                    style="width: 40px; height: 40px"
+                  >
+                    📷
+                  </div>
+                }
+              </td>
+              <td>
+                <div class="d-flex flex-column">
+                  <span class="fw-bold text-white small">{{ product.name }}</span>
+                  <span class="text-muted text-truncate small" style="max-width: 240px">{{
+                    product.description ||
+                      'No
+                  description'
+                  }}</span>
+                </div>
+              </td>
+              <td>{{ product.brand || '—' }}</td>
+              <td>
+                <span class="badge bg-secondary">
+                  {{ product.category?.name || 'Uncategorized' }}
+                </span>
+              </td>
+              <td>
+                <strong>${{ product.price ? product.price.toFixed(2) : '0.00' }}</strong>
+              </td>
+              <td>
+                <span [class]="product.stock < (product.lowStockThreshold ?? 10) ? 'badge bg-danger' : 'badge bg-success'">
+                  {{ product.stock }} units
+                </span>
+              </td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-info btn-sm" (click)="openImageModal(product)">
+                    🖼️ Images
+                  </button>
+                  <button class="btn btn-outline-light btn-sm" (click)="openEditModal(product)">
+                    ✏️ Edit
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm" (click)="deleteProduct(product.id)">
+                    🗑️ Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="text-center text-muted py-4">
+                No products found matching search criteria.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  @if (showModal()) {
+    <div class="modal d-block tab-modal-backdrop" tabIndex="-1" (click)="closeModal()">
+      <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title h6 fw-bold">
+              {{
+                editingProduct()
+                  ? 'Edit Product #' + editingProduct()?.id
+                  : 'Add New
+            Product'
+              }}
+            </h5>
+            <button type="button" class="btn-close btn-close-white" (click)="closeModal()"></button>
+          </div>
+          <form (ngSubmit)="saveProduct()">
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Product Name *</label>
+                <input
+                  type="text"
+                  class="form-control bg-dark text-white border-secondary"
+                  [(ngModel)]="formData.name"
+                  name="name"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Brand</label>
+                <input
+                  type="text"
+                  class="form-control bg-dark text-white border-secondary"
+                  [(ngModel)]="formData.brand"
+                  name="brand"
+                  placeholder="e.g. Brand Name"
+                />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Category</label>
+                <select
+                  class="form-select bg-dark text-white border-secondary"
+                  [(ngModel)]="formData.categoryId"
+                  name="categoryId"
+                >
+                  <option [ngValue]="null">Select Category</option>
+                  @for (cat of selectableCategories(); track cat.id) {
+                    <option [ngValue]="cat.id">{{ cat.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label small fw-bold">Price ($) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    class="form-control bg-dark text-white border-secondary"
+                    [(ngModel)]="formData.price"
+                    name="price"
+                    required
+                  />
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-bold">Low Stock Limit *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    class="form-control bg-dark text-white border-secondary"
+                    [(ngModel)]="formData.lowStockThreshold"
+                    name="lowStockThreshold"
+                    placeholder="Default: 10"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Description</label>
+                <textarea
+                  class="form-control bg-dark text-white border-secondary"
+                  rows="3"
+                  [(ngModel)]="formData.description"
+                  name="description"
+                ></textarea>
+              </div>
+            </div>
+            <div class="modal-footer border-secondary">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="closeModal()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary btn-sm">Save Product</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showImageModal()) {
+    <div class="modal d-block tab-modal-backdrop" tabIndex="-1" (click)="closeImageModal()">
+      <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title h6 fw-bold">Images - {{ selectedProductForImages()?.name }}</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              (click)="closeImageModal()"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="card bg-body-tertiary border-secondary p-3 mb-3">
+              <label class="form-label small fw-bold mb-2">Upload Product Images</label>
+              <input
+                type="file"
+                multiple
+                (change)="onFileSelected($event)"
+                accept="image/*"
+                class="form-control bg-dark text-white border-secondary mb-2"
+              />
+              <button
+                class="btn btn-primary btn-sm align-self-start"
+                [disabled]="selectedFiles.length === 0"
+                (click)="uploadImages()"
+              >
+                Upload {{ selectedFiles.length }} File(s)
+              </button>
+            </div>
+
+            <div class="row g-2">
+              @for (img of selectedProductForImages()?.images; track img.id) {
+                <div class="col-6 col-sm-4 col-md-3">
+                  <div class="card bg-dark border-secondary overflow-hidden h-100">
+                    <img
+                      [src]="getImageUrl(img.id)"
+                      class="card-img-top"
+                      style="height: 100px; object-fit: cover"
+                      alt="Product image"
+                    />
+                    <div class="p-2 text-center border-top border-secondary">
+                      <button
+                        class="btn btn-outline-danger btn-sm w-100 py-0"
+                        (click)="deleteImage(img.id)"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              } @empty {
+                <div class="col-12 text-center text-muted py-4 small">
+                  No images uploaded for this product yet.
+                </div>
+              }
+            </div>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="closeImageModal()">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
